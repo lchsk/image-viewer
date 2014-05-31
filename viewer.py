@@ -20,6 +20,8 @@ import random
 import subprocess
 import re
 
+pil_formats = ['bmp', 'jpg', 'jpeg', 'png', 'gif']
+
 class Screen(object):
 	def __init__(self):
 		self.screens = []
@@ -114,8 +116,12 @@ class Library(object):
 					#print os.path.join(dirname, subdirname)
 
 				# print path to all filenames.
+				
 				for filename in filenames:
-					self.dirlist.append(os.path.join(dirname, filename))			
+					ext = (os.path.splitext(filename)[1])[1:].lower()
+					
+					if ext in pil_formats:
+						self.dirlist.append(os.path.join(dirname, filename))
 					#print os.path.join(dirname, filename)
 		else:
 			self.dirlist = os.listdir(self.startdir)
