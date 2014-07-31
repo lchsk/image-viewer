@@ -36,23 +36,28 @@ class Screen(object):
 class UbuntuScreen(Screen):
 	def __init__(self):
 		super(UbuntuScreen, self).__init__()
-		self._output = subprocess.Popen('xrandr | grep " connected [0-9x+]*" | cut -d " " -f3',shell=True, stdout=subprocess.PIPE).communicate()[0]
+		self._output = subprocess.Popen('xrandr | grep " connected [0-9x+]*"',shell=True, stdout=subprocess.PIPE).communicate()[0]
+		
+		lines = ''
+		
+		for k in self._output.split('\n'):
+		  if k != '':
+		    lines = lines + k[6:]
+		
 		self.screens = []
-		for res in self._output.split():
+		for res in lines.split():
 			self._current = []
 			self._t = re.findall('([0-9]+)', res)
-			self._current.append(int(self._t[2]))
-			self._current.append(int(self._t[3]))
-			self._current.append(int(self._t[0]))
-			self._current.append(int(self._t[1]))	
-			self.screens.append(self._current)
+			if len(self._t) == 4:
+			  self._current.append(int(self._t[2]))
+			  self._current.append(int(self._t[3]))
+			  self._current.append(int(self._t[0]))
+			  self._current.append(int(self._t[1]))	
+			  self.screens.append(self._current)
 	
+		print self.screens
 		self.screens = sorted(self.screens, key=lambda s: s[0])
 		self.screens_count = len(self.screens)
-		#print self.screens
-		# list of screens
-		# pos_x, pos_y, width, height
-		#return self.screens
 
 class Input(object):
 	def __init__(self):
@@ -68,12 +73,11 @@ class Input(object):
 		self.set_default_values()
 
 		self.args = sys.argv[1:]
-		#print self.args
+
 		for argument in self.args:
 			self._single_argument = argument.split('=')
 			
 			self.get_options_item(self._single_argument)
-			#if self._single_argument[1:] in self.definition:
 				
 
 	def get_options_item(self, p_arg):
@@ -86,7 +90,6 @@ class Input(object):
 					self.options[item['param_name']] = int(p_arg[1])
 				else:
 					self.options[item['param_name']] = p_arg[1]
-				#print 'zn' + item['param_name']
 
 	def set_default_values(self):
 		for i in self.definition:
@@ -111,9 +114,6 @@ class Library(object):
 	def get_dirlist(self):
 		if self.recursive:
 			for dirname, dirnames, filenames in os.walk(self.startdir):
-				# print path to all subdirectories first.
-				#for subdirname in dirnames:
-					#print os.path.join(dirname, subdirname)
 
 				# print path to all filenames.
 				
@@ -180,10 +180,7 @@ class Viewer(object):
 
 
 		self.tkimg1 = ImageTk.PhotoImage(self._img)
-		#self.label.place(x = 0, y = 0, width=self._img.size[0], height=self._img.size[1])
 		self.label.config(image = self.tkimg1)
-		#print self.w.geometry()
-		#print self.w.winfo_x()
 		
 		self.w.title(os.path.basename(self._current_filename))
 		self.label.after(self.input.options['timeout'], self.update_image)
