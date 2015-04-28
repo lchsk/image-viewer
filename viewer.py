@@ -64,7 +64,7 @@ class Input(object):
 		self.definition = []
 		self.definition.append({ 'param_name' : 'slideshow', 'short_name' : 'l', 'long_name' : 'slideshow', 'type' : 'bool', 'default' : 'false'})
 		self.definition.append({ 'param_name' : 'recursive', 'short_name' : 'r', 'long_name' : 'recursive', 'type' : 'bool', 'default' : 'true'})
-		self.definition.append({ 'param_name' : 'randomize', 'short_name' : 'rand', 'long_name' : 'random', 'type' : 'bool', 'default' : 'false'})
+		self.definition.append({ 'param_name' : 'randomize', 'short_name' : 'rand', 'long_name' : 'random', 'type' : 'bool', 'default' : 'true'})
 		self.definition.append({ 'param_name' : 'start', 'short_name' : 's', 'long_name' : 'start', 'type' : 'string', 'default' : './'})
 		self.definition.append({ 'param_name' : 'search', 'short_name' : 'se', 'long_name' : 'search', 'type' : 'string', 'default' : ''})
 		self.definition.append({ 'param_name' : 'timeout', 'short_name' : 't', 'long_name' : 'timeout', 'type' : 'int', 'default' : '2000'})
@@ -146,6 +146,8 @@ class Library(object):
 		self.current_id = random.randint(0, self.count - 1)
 
 	def get_next_filename(self):
+	  
+		print self.randomize
 		if self.randomize:
 			# self.current_id = random.randint(0, self.count - 1)
 			self.get_random_id()
