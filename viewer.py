@@ -2,7 +2,7 @@
 # Image Viewer
 # Python 2.7, PIL, Tkinter
 # lchsk.com
-# 
+#
 # Todo:
 #	+ searching images
 #	- help screen
@@ -12,13 +12,14 @@
 #   - config file
 #############################################
 
-import Tkinter 
+import Tkinter
 import Image, ImageTk
 import os
 import sys
 import random
 import subprocess
 import re
+import operator
 
 pil_formats = ['bmp', 'jpg', 'jpeg', 'png', 'gif']
 
@@ -31,19 +32,19 @@ class Screen(object):
 		for i, screen in enumerate(self.screens):
 			if p_pos_x >= screen[0] and p_pos_x < (screen[0] + screen[2]):
 				self.current_screen = screen
-				return i	
+				return i
 
 class UbuntuScreen(Screen):
 	def __init__(self):
 		super(UbuntuScreen, self).__init__()
 		self._output = subprocess.Popen('xrandr | grep " connected [0-9x+]*"',shell=True, stdout=subprocess.PIPE).communicate()[0]
-		
+
 		lines = ''
-		
+
 		for k in self._output.split('\n'):
 		  if k != '':
 		    lines = lines + k[6:]
-		
+
 		self.screens = []
 		for res in lines.split():
 			self._current = []
@@ -52,9 +53,9 @@ class UbuntuScreen(Screen):
 			  self._current.append(int(self._t[2]))
 			  self._current.append(int(self._t[3]))
 			  self._current.append(int(self._t[0]))
-			  self._current.append(int(self._t[1]))	
+			  self._current.append(int(self._t[1]))
 			  self.screens.append(self._current)
-	
+
 		print self.screens
 		self.screens = sorted(self.screens, key=lambda s: s[0])
 		self.screens_count = len(self.screens)
@@ -69,22 +70,33 @@ class Input(object):
 		self.definition.append({ 'param_name' : 'search', 'short_name' : 'se', 'long_name' : 'search', 'type' : 'string', 'default' : ''})
 		self.definition.append({ 'param_name' : 'timeout', 'short_name' : 't', 'long_name' : 'timeout', 'type' : 'int', 'default' : '2000'})
 		self.definition.append({ 'param_name' : 'resize', 'short_name' : 'res', 'long_name' : 'resize', 'type' : 'string', 'default' : 'yes', 'values' : ['no', 'yes', 'always']})
+		self.definition.append({ 'param_name' : 'help', 'short_name' : 'h', 'long_name' : 'help', 'type' : 'bool', 'default' : 'false'})
+		self.definition.append({ 'param_name' : 'first', 'short_name' : 'f', 'long_name' : 'first', 'type' : 'int', 'default' : '0'})
+
 
 		self.options = {}
 		self.set_default_values()
 
 		self.args = sys.argv[1:]
 
-		for argument in self.args:
-			self._single_argument = argument.split('=')
-			
-			self.get_options_item(self._single_argument)
-				
+		if len(self.args) == 0:
+			self.help()
+			sys.exit(0)
+
+		if len(self.args) > 0:
+			for argument in self.args:
+				self._single_argument = argument.split('=')
+
+				self.get_options_item(self._single_argument)
+
+				if self.options['help']:
+					self.help()
+					sys.exit()
 
 	def get_options_item(self, p_arg):
 		for item in self.definition:
 			if p_arg[0][1:] == item['short_name'] or p_arg[0][2:] == item['long_name']:
-				
+
 				if item['type'] == 'bool':
 					self.options[item['param_name']] = True if p_arg[1] == 'true' else False
 				elif item['type'] == 'int':
@@ -92,41 +104,49 @@ class Input(object):
 				else:
 					self.options[item['param_name']] = p_arg[1]
 
+	def help(self):
+		print "usage:\n\tpython {0}".format(sys.argv[0])
+
+		for k in self.definition:
+			print "--{0}\t-{1}\t{2}".format(k['long_name'], k['short_name'], k['default'])
+
 	def set_default_values(self):
 		for i in self.definition:
 			if i['type'] == 'bool':
 				self.options[i['param_name']] = True if i['default'] == 'true' else False
 			elif i['type'] == 'int':
-				self.options[i['param_name']] = int(i['default'])	
+				self.options[i['param_name']] = int(i['default'])
 			else:
 				self.options[i['param_name']] = i['default']
 
 class Library(object):
-	def __init__(self, p_start_dir, p_recursive, p_randomize, p_search_string):
+	def __init__(self, p_start_dir, p_recursive, p_randomize, p_search_string, p_first):
+		self.first = p_first
 		self.current_id = -1;
 		self.randomize = p_randomize
 		self.recursive = p_recursive
 		self.search_string = p_search_string
 		self.startdir = p_start_dir
 		self.dirlist = []
+
 		self.get_dirlist()
 		self.direction = 1
-		
+
 	def get_dirlist(self):
 		if self.recursive:
 			for dirname, dirnames, filenames in os.walk(self.startdir):
 
 				# print path to all filenames.
-				
 				for filename in filenames:
+
 					ext = (os.path.splitext(filename)[1])[1:].lower()
-					
+
 					if ext in pil_formats:
 						self.dirlist.append(os.path.join(dirname, filename))
 		else:
 			self.dirlist = os.listdir(self.startdir)
 			self.dirlist = [self.startdir + x for x in self.dirlist]
-		
+
 		# search
 		if len(self.search_string) > 0:
 			self._dirlist_copy = self.dirlist
@@ -134,9 +154,26 @@ class Library(object):
 			for item in self._dirlist_copy:
 				if self.search_string in os.path.basename(item).lower():
 					self.dirlist.append(item)
-	
+
+		# first N
+		if self.first > 0:
+			self._dirlist_copy = self.dirlist
+			self.dirlist = []
+
+			f_count = 0
+			self.modtime = { f: os.stat(f).st_mtime for f in self._dirlist_copy}
+			for t in sorted(self.modtime.items(), key=operator.itemgetter(1), reverse=True):
+				self.dirlist.append(t[0])
+				f_count = f_count + 1
+				if f_count >= self.first:
+					break
+
 		self.count = len(self.dirlist)
 		print 'Found ' + str(self.count) + ' images.'
+
+		if self.count == 0:
+			sys.exit(0)
+
 		self.dirlist = sorted(self.dirlist)
 
 	def be_safe(self):
@@ -146,8 +183,7 @@ class Library(object):
 		self.current_id = random.randint(0, self.count - 1)
 
 	def get_next_filename(self):
-	  
-		print self.randomize
+
 		if self.randomize:
 			# self.current_id = random.randint(0, self.count - 1)
 			self.get_random_id()
@@ -155,14 +191,14 @@ class Library(object):
 			self.current_id = self.current_id + self.direction
 
 		self.be_safe()
-	
+
 		return self.dirlist[self.current_id]
 
 class Viewer(object):
 	def __init__(self):
 		self.input = Input()
 		self.screen = UbuntuScreen()
-		self.library = Library(self.input.options['start'], self.input.options['recursive'], self.input.options['randomize'], self.input.options['search'])
+		self.library = Library(self.input.options['start'], self.input.options['recursive'], self.input.options['randomize'], self.input.options['search'], p_first=self.input.options['first'])
 
 		self.w = Tkinter.Tk()
 
@@ -193,10 +229,10 @@ class Viewer(object):
 		self.screen.which_screen(self.w.winfo_x(), self.w.winfo_y())
 
 		# resize
-		if self.input.options['resize'] == 'always':	
+		if self.input.options['resize'] == 'always':
 			self._img = Image.open(self._current_filename)
 			self._img = self._img.resize((self._img.size[0] * (self.screen.current_screen[3] - 60) / self._img.size[1], self.screen.current_screen[3] - 60), Image.ANTIALIAS)
-		elif self.input.options['resize'] == 'yes':	
+		elif self.input.options['resize'] == 'yes':
 			self._img = Image.open(self._current_filename)
 			if self._img.size[1] < self.screen.current_screen[3]:
 				pass
@@ -208,7 +244,7 @@ class Viewer(object):
 
 		self.tkimg1 = ImageTk.PhotoImage(self._img)
 		self.label.config(image = self.tkimg1)
-		
+
 		self.w.title(os.path.basename(self._current_filename))
 
 		if self.input.options['slideshow']:
@@ -216,4 +252,3 @@ class Viewer(object):
 
 if __name__ == '__main__':
 	viewer = Viewer()
- 
