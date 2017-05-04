@@ -1,17 +1,4 @@
-#############################################
-# Image Viewer
-# Python 2.7, PIL, Tkinter
-# lchsk.com
-#
-# Todo:
-#	+ searching images
-#	- help screen
-#	- resizing with set width
-#	+ using arrows/space
-#   + recurisive search
-#   - config file
-#############################################
-
+#!/usr/bin/env python3
 
 try:
     import Tkinter
