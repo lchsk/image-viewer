@@ -12,7 +12,13 @@
 #   - config file
 #############################################
 
-import Tkinter
+
+try:
+    import Tkinter
+    tkinter = Tkinter
+except ImportError:
+    import tkinter
+
 from PIL import Image, ImageTk
 import os
 import sys
@@ -41,7 +47,8 @@ class UbuntuScreen(Screen):
 
 		lines = ''
 
-		for k in self._output.split('\n'):
+
+		for k in str(self._output).split('\n'):
 		  if k != '':
 		    lines = lines + k[6:]
 
@@ -56,7 +63,7 @@ class UbuntuScreen(Screen):
 			  self._current.append(int(self._t[1]))
 			  self.screens.append(self._current)
 
-		print self.screens
+		print(self.screens)
 		self.screens = sorted(self.screens, key=lambda s: s[0])
 		self.screens_count = len(self.screens)
 
@@ -105,10 +112,10 @@ class Input(object):
 					self.options[item['param_name']] = p_arg[1]
 
 	def help(self):
-		print "usage:\n\tpython {0}".format(sys.argv[0])
+		print("usage:\n\tpython {0}".format(sys.argv[0]))
 
 		for k in self.definition:
-			print "--{0}\t-{1}\t{2}".format(k['long_name'], k['short_name'], k['default'])
+			print("--{0}\t-{1}\t{2}".format(k['long_name'], k['short_name'], k['default']))
 
 	def set_default_values(self):
 		for i in self.definition:
@@ -169,7 +176,7 @@ class Library(object):
 					break
 
 		self.count = len(self.dirlist)
-		print 'Found ' + str(self.count) + ' images.'
+		print('Found ' + str(self.count) + ' images.')
 
 		if self.count == 0:
 			sys.exit(0)
@@ -200,14 +207,14 @@ class Viewer(object):
 		self.screen = UbuntuScreen()
 		self.library = Library(self.input.options['start'], self.input.options['recursive'], self.input.options['randomize'], self.input.options['search'], p_first=self.input.options['first'])
 
-		self.w = Tkinter.Tk()
+		self.w = tkinter.Tk()
 
 		self.w.bind("<Right>", self.next)
 		self.w.bind("<Left>", self.previous)
 		self.w.bind("<space>", self.random)
 
 		self.w.geometry('+%d+%d' % (0, 0))
-		self.label = Tkinter.Label(self.w)
+		self.label = tkinter.Label(self.w)
 		self.label.pack()
 		self.w.after(0, self.update_image)
 		self.w.mainloop()
@@ -237,7 +244,7 @@ class Viewer(object):
 			if self._img.size[1] < self.screen.current_screen[3]:
 				pass
 			else:
-				self._img = self._img.resize((self._img.size[0] * (self.screen.current_screen[3] - 60) / self._img.size[1], self.screen.current_screen[3] - 60), Image.ANTIALIAS)
+				self._img = self._img.resize((int(self._img.size[0] * (self.screen.current_screen[3] - 60) / self._img.size[1]), int(self.screen.current_screen[3] - 60)), Image.ANTIALIAS)
 		else:
 			self._img = Image.open(self._current_filename)
 
