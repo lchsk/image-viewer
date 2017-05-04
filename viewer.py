@@ -13,7 +13,7 @@
 #############################################
 
 import Tkinter
-import Image, ImageTk
+from PIL import Image, ImageTk
 import os
 import sys
 import random
