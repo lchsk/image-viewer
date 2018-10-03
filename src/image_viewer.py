@@ -196,6 +196,8 @@ class Viewer(object):
         self.screen = UbuntuScreen()
         self.library = Library(self.input.options['start'], self.input.options['recursive'], self.input.options['randomize'], self.input.options['search'], p_first=self.input.options['first'])
 
+        self._img = None
+
         self.w = tkinter.Tk()
 
         self.w.bind("<Right>", self.next)
@@ -220,24 +222,30 @@ class Viewer(object):
         self.library.get_random_id()
         self.update_image()
 
+    def _open_image(self):
+        try:
+            self._img = Image.open(self._current_filename)
+        except OSError as e:
+            self._img = None
+            print('Coulnt not open %s %s' % (self._current_filename, e))
+
     def update_image(self):
         self._current_filename = self.library.get_next_filename()
         self.screen.which_screen(self.w.winfo_x(), self.w.winfo_y())
 
+        self._open_image()
+
+        if not self._img:
+            self.label.after(0, self.update_image)
+
         # resize
         if self.input.options['resize'] == 'always':
-            self._img = Image.open(self._current_filename)
             self._img = self._img.resize((self._img.size[0] * (self.screen.current_screen[3] - 60) / self._img.size[1], self.screen.current_screen[3] - 60), Image.ANTIALIAS)
         elif self.input.options['resize'] == 'yes':
-            self._img = Image.open(self._current_filename)
-
             if self._img.size[1] < self.screen.current_screen[3]:
                 pass
             else:
                 self._img = self._img.resize((int(self._img.size[0] * (self.screen.current_screen[3] - 60) / self._img.size[1]), int(self.screen.current_screen[3] - 60)), Image.ANTIALIAS)
-        else:
-            self._img = Image.open(self._current_filename)
-
 
         self.tkimg1 = ImageTk.PhotoImage(self._img)
         self.label.config(image = self.tkimg1)
@@ -248,4 +256,7 @@ class Viewer(object):
             self.label.after(self.input.options['timeout'], self.update_image)
 
 if __name__ == '__main__':
-    viewer = Viewer()
+    try:
+        viewer = Viewer()
+    except KeyboardInterrupt:
+        print('Quitting')
