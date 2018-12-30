@@ -145,11 +145,11 @@ class Library(object):
         if len(self.search_string) > 0:
             self._dirlist_copy = self.dirlist
 
-            self.dirlist = []
-
-            for item in self._dirlist_copy:
-                if self.search_string in os.path.basename(item).lower():
-                    self.dirlist.append(item)
+            self.dirlist = [
+                item
+                for item in self._dirlist_copy
+                if self.search_string.lower() in item.lower()
+            ]
 
         # first N
         if self.first > 0:
@@ -247,7 +247,12 @@ class Viewer(object):
             else:
                 self._img = self._img.resize((int(self._img.size[0] * (self.screen.current_screen[3] - 60) / self._img.size[1]), int(self.screen.current_screen[3] - 60)), Image.ANTIALIAS)
 
-        self.tkimg1 = ImageTk.PhotoImage(self._img)
+        try:
+            self.tkimg1 = ImageTk.PhotoImage(self._img)
+        except OSError as e:
+            print('Coulnt not open %s %s' % (self._current_filename, e))
+            return
+
         self.label.config(image = self.tkimg1)
 
         self.w.title(os.path.basename(self._current_filename))
