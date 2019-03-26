@@ -227,7 +227,7 @@ class Viewer(object):
             self._img = Image.open(self._current_filename)
         except OSError as e:
             self._img = None
-            print('Coulnt not open %s %s' % (self._current_filename, e))
+            print('Could not open %s %s' % (self._current_filename, e))
 
     def _resize_image(self):
         width = int(self._img.size[0] * (self.screen.current_screen[3] - 60) / self._img.size[1])
@@ -246,6 +246,7 @@ class Viewer(object):
 
         if not self._img:
             self.label.after(0, self.update_image)
+            return
 
         # resize
         if self.input.options['resize'] == 'always':
@@ -253,6 +254,8 @@ class Viewer(object):
         elif self.input.options['resize'] == 'yes':
             if self._img.size[1] > self.screen.current_screen[3]:
                 self._resize_image()
+
+        assert self._img
 
         try:
             self.tkimg1 = ImageTk.PhotoImage(self._img)
