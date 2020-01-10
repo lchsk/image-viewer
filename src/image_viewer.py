@@ -68,7 +68,7 @@ class Input(object):
         self.definition.append({ 'param_name' : 'resize', 'short_name' : 'res', 'long_name' : 'resize', 'type' : 'string', 'default' : 'yes', 'values' : ['no', 'yes', 'always']})
         self.definition.append({ 'param_name' : 'help', 'short_name' : 'h', 'long_name' : 'help', 'type' : 'bool', 'default' : 'false'})
         self.definition.append({ 'param_name' : 'first', 'short_name' : 'f', 'long_name' : 'first', 'type' : 'int', 'default' : '0'})
-
+        self.definition.append({ 'param_name' : 'verbose', 'short_name' : 'v', 'long_name' : 'verbose', 'type' : 'bool', 'default' : 'false'})
 
         self.options = {}
         self.set_default_values()
@@ -92,7 +92,6 @@ class Input(object):
     def get_options_item(self, p_arg):
         for item in self.definition:
             if p_arg[0][1:] == item['short_name'] or p_arg[0][2:] == item['long_name']:
-
                 if item['type'] == 'bool':
                     self.options[item['param_name']] = True if p_arg[1] == 'true' else False
                 elif item['type'] == 'int':
@@ -225,6 +224,9 @@ class Viewer(object):
     def _open_image(self):
         try:
             self._img = Image.open(self._current_filename)
+
+            if self.input.options['verbose']:
+                print('%s %s' % (self._current_filename, self._img.size))
         except OSError as e:
             self._img = None
             print('Could not open %s %s' % (self._current_filename, e))
