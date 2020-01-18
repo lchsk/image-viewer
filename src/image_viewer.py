@@ -195,6 +195,8 @@ class Viewer(object):
         self.screen = UbuntuScreen()
         self.library = Library(self.input.options['start'], self.input.options['recursive'], self.input.options['randomize'], self.input.options['search'], p_first=self.input.options['first'])
 
+        self._slideshow = self.input.options['slideshow']
+
         self._img = None
 
         self.w = tkinter.Tk()
@@ -206,18 +208,27 @@ class Viewer(object):
         self.w.geometry('+%d+%d' % (0, 0))
         self.label = tkinter.Label(self.w)
         self.label.pack()
+
+        self.text = tkinter.Label(self.w, text="", fg="#ff00ff",
+                                  anchor=tkinter.NW
+        )
+        self.text.place(relx=0, width=300, height=20)
+
         self.w.after(0, self.update_image)
         self.w.mainloop()
 
     def next(self, event):
+        self._slideshow = False
         self.library.direction = 1
         self.update_image()
 
     def previous(self, event):
+        self._slideshow = False
         self.library.direction = -1
         self.update_image()
 
     def random(self, event):
+        self._slideshow = True
         self.library.get_random_id()
         self.update_image()
 
@@ -227,6 +238,16 @@ class Viewer(object):
 
             if self.input.options['verbose']:
                 print('%s %s' % (self._current_filename, self._img.size))
+
+            path_items = self._current_filename.split('/')
+
+            if len(path_items) > 2:
+                text = f'{path_items[-2]} {path_items[-1]}'
+            else:
+                text = self._current_filename
+
+            self.text.config(text=text)
+
         except OSError as e:
             self._img = None
             print('Could not open %s %s' % (self._current_filename, e))
@@ -269,7 +290,7 @@ class Viewer(object):
 
         self.w.title(os.path.basename(self._current_filename))
 
-        if self.input.options['slideshow']:
+        if self._slideshow:
             self.label.after(self.input.options['timeout'], self.update_image)
 
 if __name__ == '__main__':
